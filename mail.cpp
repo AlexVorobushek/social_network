@@ -3,13 +3,16 @@
 #include <list>
 #include <iterator>
 #include <fstream>
+#include <windows.h>
+#include <initializer_list>
 
 struct Computer
 {
     int id;
 };
 
-struct User{
+struct User
+{
     int id;
     std::string name;
     std::list<int> friends = {};
@@ -66,10 +69,14 @@ private:
     AuthorisationsLog authorisation_log;
 
 public:
-    void authorisation(Computer computer, int id, std::string passwd)
+    bool authorisation(Computer computer, int id, std::string passwd)
     {
         if (is_true_passwd(id, passwd))
+        {
             authorisation_log.new_record(computer, id);
+            return true;
+        }
+        return false;
     }
 
     User get_user_by_computer(Computer computer)
@@ -98,16 +105,43 @@ public:
     }
 };
 
-void router(std::string command)
+std::string router(Server server, Computer computer, std::string command)
 {
-    if (command == "authorise"){}
-    else if (command == "-h"){
-        std::cout << "You are in social network consol, my autors are Dmitry Sergeevich and vorobushek, good luck" << std::endl;
+    if (command == "authorise")
+    {
+        int id;
+        std::string passwd;
+        std::cout << "enter your id: ";
+        std::cin >> id;
+        std::cout << "enter your passwd: ";
+        std::cin >> passwd;
+        bool success = server.authorisation(computer, id, passwd);
+        return success ? "\x1B[32msuccess\033[0m" : "\x1B[31mfail\033[0m";
     }
-    else{
-        std::cout << "no command " << command << std::endl;
+    if (command == "-h")
+    {
+        return "You are in social network consol, my autors are Dmitry Sergeevich and vorobushek, good luck\nYou can enter commands:\n-  authorise\n-  add friend\n-  delete friend\n-  exit";
+    }
+    else
+    {
+        return "\x1B[31mno command " + command + "\033[0m";
     }
 }
+
+// void print(std::initializer_list<std::string>args, bool endl=true, std::string sep = "", std::string color = "normal"){
+//     if (color == "normal")
+//         std::cout << "\033[0m";
+//     else if (color == "red")
+//         std::cout << "\x1B[31m";
+//     else if (color == "green")
+//         std::cout << "\x1B[32m";
+    
+//     for (std::string elem : args){
+//         std::cout << elem << sep;
+//     }
+//     std::cout << "\033[0m";
+//     if (endl) std::cout << std::endl;
+// }
 
 int main()
 {
@@ -116,14 +150,16 @@ int main()
     Server server;
 
     User me = server.get_user_by_computer(my_computer);
-    
+
     // server.authorisation(my_computer, 0, "123123123");
     // me.save_at_computer();
 
     std::string command = "-h";
-    while (command!="exit"){
-        router(command);
-        std::cout << me.name << "> ";
+    while (command != "exit")
+    {
+        std::cout << router(server, my_computer, command) << std::endl;
+        std::cout <<"\x1B[32m<"<< me.name << ">\033[0m\n";
+        std::cout << ">> ";
         std::cin >> command;
     }
     return 0;
